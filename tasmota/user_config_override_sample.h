@@ -21,7 +21,7 @@
 #define _USER_CONFIG_OVERRIDE_H_
 
 // force the compiler to show a warning to confirm that this file is included
-#warning **** user_config_override.h: Using Settings from this File ****
+//#warning **** user_config_override.h: Using Settings from this File ****
 
 /*****************************************************************************************************\
  * USAGE:
@@ -43,18 +43,19 @@ Examples :
 // -- Master parameter control --------------------
 #undef  CFG_HOLDER
 #define CFG_HOLDER        4617                   // [Reset 1] Change this value to load SECTION1 configuration parameters to flash
-
+*/
 // -- Setup your own Wifi settings  ---------------
-#undef  STA_SSID1
-#define STA_SSID1         "YourSSID"             // [Ssid1] Wifi SSID
+undef  STA_SSID1
+define STA_SSID1         "coolwlan"             // [Ssid1] Wifi SSID
 
-#undef  STA_PASS1
-#define STA_PASS1         "YourWifiPassword"     // [Password1] Wifi password
+undef  STA_PASS1
+define STA_PASS1         "chezwam06"     // [Password1] Wifi password
 
 // -- Setup your own MQTT settings  ---------------
 #undef  MQTT_HOST
-#define MQTT_HOST         "your-mqtt-server.com" // [MqttHost]
+#define MQTT_HOST         "192.168.1.10" // [MqttHost]
 
+/*
 #undef  MQTT_PORT
 #define MQTT_PORT         1883                   // [MqttPort] MQTT port (10123 on CloudMQTT)
 

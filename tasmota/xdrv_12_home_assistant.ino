@@ -957,7 +957,9 @@ void HAssAnnounceShutters(void)
     snprintf_P(unique_id, sizeof(unique_id), PSTR("%06X_SHT_%d"), ESP_getChipId(), i + 1);
     snprintf_P(stopic, sizeof(stopic), PSTR(HOME_ASSISTANT_DISCOVERY_PREFIX "/cover/%s/config"), unique_id);
 
-    if (Settings.flag.hass_discovery && Settings.flag3.shutter_mode && Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) {
+    if ((Settings.flag.hass_discovery && Settings.flag3.shutter_mode && Settings.shutter_startrelay[i] > 0 && Settings.shutter_startrelay[i] <= MAX_RELAYS) ||
+      (TUYA_MOTOR == Settings.module && 0==i)
+    ){
        ShowTopic = 0; // Show the new generated topic
       if (i > MAX_FRIENDLYNAMES) {
         snprintf_P(stemp1, sizeof(stemp1), PSTR("%s Shutter %d"), SettingsText(SET_DEVICENAME), i + 1);

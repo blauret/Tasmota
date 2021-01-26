@@ -718,7 +718,7 @@ bool RuleSetProcess(uint8_t rule_set, String &event_saved)
     String event = event_saved;
 
 #ifdef DEBUG_RULES
-//    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("RUL-RP2: Event |%s|, Rule |%s|, Command(s) |%s|"), event.c_str(), event_trigger.c_str(), commands.c_str());
 #endif
 
     if (RulesRuleMatch(rule_set, event, event_trigger, stop_all_rules)) {

@@ -1350,7 +1350,7 @@ bool Xdrv16(uint8_t function)
 {
   bool result = false;
 
-  if (TUYA_DIMMER == TasmotaGlobal.module_type) {
+  if (TUYA_DIMMER == TasmotaGlobal.module_type || TUYA_MOTOR == TasmotaGlobal.module_type) {
     switch (function) {
       case FUNC_LOOP:
         if (TuyaSerial) { TuyaSerialInput(); }

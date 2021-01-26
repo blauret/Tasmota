@@ -392,9 +392,9 @@ enum TuyaSupportedFunctions { TUYA_MCU_FUNC_NONE,
                               TUYA_MCU_FUNC_TEMP = 71, TUYA_MCU_FUNC_TEMPSET, TUYA_MCU_FUNC_HUM, TUYA_MCU_FUNC_HUMSET,
                               TUYA_MCU_FUNC_LX = 75, TUYA_MCU_FUNC_TVOC, TUYA_MCU_FUNC_CO2, TUYA_MCU_FUNC_ECO2,
                               TUYA_MCU_FUNC_TIMER1 = 81, TUYA_MCU_FUNC_TIMER2, TUYA_MCU_FUNC_TIMER3, TUYA_MCU_FUNC_TIMER4,
-                              TUYA_MCU_FUNC_MOTOR_DIR = 97,
-                              TUYA_MCU_FUNC_ERROR = 98,
-                              TUYA_MCU_FUNC_DUMMY = 99,
+                              TUYA_MCU_FUNC_MOTOR_DIR = 97,TUYA_MCU_FUNC_MOTOR_CT,TUYA_MCU_FUNC_MOTOR_POS,TUYA_MCU_FUNC_MOTOR_REPORT,
+                              TUYA_MCU_FUNC_ERROR = 101,
+                              TUYA_MCU_FUNC_DUMMY = 102,
                               TUYA_MCU_FUNC_LAST = 255
                               // IDs from 230 to 234 are reserved for internal use
 };
