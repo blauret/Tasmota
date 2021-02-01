@@ -710,8 +710,9 @@ void TuyaProcessStatePacket(void) {
         uint16_t packetValue = Tuya.buffer[dpidStart + 6] << 8 | Tuya.buffer[dpidStart + 7];
         uint8_t dimIndex;
         bool SnsUpdate = false;
-
-        if ((fnId >= TUYA_MCU_FUNC_TEMP) && (fnId <= TUYA_MCU_FUNC_TIMER4)) {      // Sensors start from fnId 71
+        if (fnId == TUYA_MCU_FUNC_MOTOR_REPORT) {
+          tuyaUpdateRealposition(0,packetValue); 
+        } else if ((fnId >= TUYA_MCU_FUNC_TEMP) && (fnId <= TUYA_MCU_FUNC_TIMER4)) {      // Sensors start from fnId 71
           if (packetValue != Tuya.Sensors[fnId-71]) {
             Tuya.SensorsValid[fnId-71] = true;
             Tuya.Sensors[fnId-71] = packetValue;
@@ -972,8 +973,11 @@ bool TuyaModuleSelected(void)
     TasmotaGlobal.restart_flag = 2;
   }
 
+
+  if(TUYA_MOTOR !=  Settings.module) {
   if (TuyaGetDpId(TUYA_MCU_FUNC_DIMMER) == 0 && TUYA_DIMMER_ID > 0) {
     TuyaAddMcuFunc(TUYA_MCU_FUNC_DIMMER, TUYA_DIMMER_ID);
+  }
   }
 
   bool relaySet = false;
@@ -986,10 +990,17 @@ bool TuyaModuleSelected(void)
     }
   }
 
-  if (!relaySet && TuyaGetDpId(TUYA_MCU_FUNC_DUMMY) == 0) { //by default the first relay is created automatically the dummy let remove it if not needed
-    TuyaAddMcuFunc(TUYA_MCU_FUNC_REL1, 1);
-    TasmotaGlobal.devices_present++;
-    SettingsSaveAll();
+  if(TUYA_MOTOR !=  Settings.module) {
+    if (!relaySet && TuyaGetDpId(TUYA_MCU_FUNC_DUMMY) == 0) { //by default the first relay is created automatically the dummy let remove it if not needed
+      TuyaAddMcuFunc(TUYA_MCU_FUNC_REL1, 1);
+      TasmotaGlobal.devices_present++;
+      SettingsSaveAll();
+    }
+  } else {
+    TasmotaGlobal.shutters_present = 1;
+    TuyaAddMcuFunc(TUYA_MCU_FUNC_MOTOR_CT, 1);
+    TuyaAddMcuFunc(TUYA_MCU_FUNC_MOTOR_POS, 2);
+    TuyaAddMcuFunc(TUYA_MCU_FUNC_MOTOR_REPORT, 3);
   }
 
   // Possible combinations for Lights:

@@ -47,7 +47,7 @@ int32_t  toBeAcc = 0;
 
 
 const uint8_t MAX_MODES = 7;
-enum Shutterposition_mode {SHT_UNDEF, SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,};
+enum Shutterposition_mode {SHT_UNDEF, SHT_TIME, SHT_TIME_UP_DOWN, SHT_TIME_GARAGE, SHT_COUNTER, SHT_PWM_VALUE, SHT_PWM_TIME,SHT_TUYA};
 enum Shutterswitch_mode {SHT_SWITCH, SHT_PULSE,};
 enum ShutterButtonStates { SHT_NOT_PRESSED, SHT_PRESSED_MULTI, SHT_PRESSED_HOLD, SHT_PRESSED_IMMEDIATE, SHT_PRESSED_EXT_HOLD, SHT_PRESSED_MULTI_SIMULTANEOUS, SHT_PRESSED_HOLD_SIMULTANEOUS, SHT_PRESSED_EXT_HOLD_SIMULTANEOUS,};
 
@@ -113,8 +113,17 @@ void ShutterLogPos(uint32_t i)
 
 void ExecuteCommandPowerShutter(uint32_t device, uint32_t state, uint32_t source)
 {
-  // first implementation for virtual relays. Avoid switching relay numbers that do not exist.
-  if (device <= TasmotaGlobal.devices_present) ExecuteCommandPower(device,state,source);
+  
+  if ( TUYA_MOTOR == Settings.module) {
+    if (device == 2){
+      TuyaSendEnum(1,(state == 1)? 2 : 0);
+    }
+  } else {
+    // first implementation for virtual relays. Avoid switching relay numbers that do not exist.
+    if (device <= TasmotaGlobal.devices_present) ExecuteCommandPower(device,state,source);
+
+  }
+
 }
 
 void ShutterUpdateVelocity(uint8_t i)
@@ -430,43 +439,67 @@ void ShutterDecellerateForStop(uint8_t i)
 
 void ShutterPowerOff(uint8_t i) {
   AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Stop Shutter %d. Switchmode %d"), i,Shutter[i].switch_mode);
-  ShutterDecellerateForStop(i);
-  switch (Shutter[i].switch_mode) {
-    case SHT_SWITCH:
-      if ((1 << (Settings.shutter_startrelay[i]-1)) & TasmotaGlobal.power) {
-        ExecuteCommandPowerShutter(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
-      }
-      if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
-        ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
-      }
-    break;
-    case SHT_PULSE:
-      uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter[i].direction == 1 ? 0 : (uint8_t)(ShutterGlobal.position_mode == SHT_TIME)) ;
-      // we have a momentary switch here. Needs additional pulse on same relay after the end
-      if ((SRC_PULSETIMER == TasmotaGlobal.last_source || SRC_SHUTTER == TasmotaGlobal.last_source || SRC_WEBGUI == TasmotaGlobal.last_source)) {
-        ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
-        // switch off direction relay to make it power less
-        if (((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power)  && Settings.shutter_startrelay[i]+1 != cur_relay) {
+  if(TUYA_MOTOR == Settings.module) {
+    TuyaSendEnum(1,1);
+  } else{
+    ShutterDecellerateForStop(i);
+    switch (Shutter[i].switch_mode) {
+      case SHT_SWITCH:
+        if ((1 << (Settings.shutter_startrelay[i]-1)) & TasmotaGlobal.power) {
+          ExecuteCommandPowerShutter(Settings.shutter_startrelay[i], 0, SRC_SHUTTER);
+        }
+        if ((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power) {
           ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
         }
-      } else {
-        TasmotaGlobal.last_source = SRC_SHUTTER;
-      }
-    break;
-  }
-  // Store current PWM value to ensure proper position after reboot.
-  switch (ShutterGlobal.position_mode) {
-    case SHT_PWM_VALUE:
-    char scmnd[20];
-    snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM " %d" ),Shutter[i].pwm_value);
-    ExecuteCommand(scmnd, SRC_BUTTON);
-    break;
+      break;
+      case SHT_PULSE:
+        uint8_t cur_relay = Settings.shutter_startrelay[i] + (Shutter[i].direction == 1 ? 0 : (uint8_t)(ShutterGlobal.position_mode == SHT_TIME)) ;
+        // we have a momentary switch here. Needs additional pulse on same relay after the end
+        if ((SRC_PULSETIMER == TasmotaGlobal.last_source || SRC_SHUTTER == TasmotaGlobal.last_source || SRC_WEBGUI == TasmotaGlobal.last_source)) {
+          ExecuteCommandPowerShutter(cur_relay, 1, SRC_SHUTTER);
+          // switch off direction relay to make it power less
+          if (((1 << (Settings.shutter_startrelay[i])) & TasmotaGlobal.power)  && Settings.shutter_startrelay[i]+1 != cur_relay) {
+            ExecuteCommandPowerShutter(Settings.shutter_startrelay[i]+1, 0, SRC_SHUTTER);
+          }
+        } else {
+          TasmotaGlobal.last_source = SRC_SHUTTER;
+        }
+      break;
+    }
+    // Store current PWM value to ensure proper position after reboot.
+    switch (ShutterGlobal.position_mode) {
+      case SHT_PWM_VALUE:
+      char scmnd[20];
+      snprintf_P(scmnd, sizeof(scmnd), PSTR(D_CMND_PWM " %d" ),Shutter[i].pwm_value);
+      ExecuteCommand(scmnd, SRC_BUTTON);
+      break;
+    }
   }
   if (Shutter[i].direction !=0) {
     Shutter[i].direction = 0;
     delay(MOTOR_STOP_TIME);
   }
 }
+
+
+
+void tuyaUpdateRealposition(uint8_t i, uint16_t pos) 
+{
+  char scommand[CMDSZ];
+  char stopic[TOPSZ];
+
+  Shutter[i].real_position =  pos;
+  // sending MQTT result to broker
+  snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
+  GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
+  Response_P("%d", 100 - pos);
+  MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
+  ShutterReportPosition(true, i);
+  if(Shutter[i].real_position = Shutter[i].target_position) {
+    Shutter[i].direction = 0;
+  }
+}
+
 
 void ShutterUpdatePosition(void)
 {
@@ -1480,7 +1513,7 @@ bool Xdrv27(uint8_t function)
 {
   bool result = false;
 
-  if (Settings.flag3.shutter_mode) {  // SetOption80 - Enable shutter support
+  if (Settings.flag3.shutter_mode || TUYA_MOTOR == Settings.module) {  // SetOption80 - Enable shutter support
     switch (function) {
       case FUNC_PRE_INIT:
         ShutterInit();
