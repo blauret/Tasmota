@@ -21,7 +21,7 @@
 #define _USER_CONFIG_OVERRIDE_H_
 
 // force the compiler to show a warning to confirm that this file is included
-//#warning **** user_config_override.h: Using Settings from this File ****
+#warning **** user_config_override.h: Using Settings from this File ****
 
 /*****************************************************************************************************\
  * USAGE:

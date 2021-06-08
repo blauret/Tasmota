@@ -347,7 +347,7 @@ void ShutterReportPosition(bool always, uint32_t index)
     n = index+1;
   }
   for (i; i < n; i++) {
-    //AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Real Pos %d"), i+1,Shutter[i].real_position);
+    AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: Shtr%d Real Pos %d, target_pos: %d, direction: %d"), i+1,Shutter[i].real_position,Shutter[i].target_position, Shutter[i].direction );
     uint32_t position = ShutterRealToPercentPosition(Shutter[i].real_position, i);
     if (Shutter[i].direction != 0) {
       TasmotaGlobal.rules_flag.shutter_moving = 1;
@@ -365,6 +365,7 @@ void ShutterReportPosition(bool always, uint32_t index)
 }
 
 void ShutterLimitRealAndTargetPositions(uint32_t i) {
+  AddLog_P(LOG_LEVEL_DEBUG, PSTR("SHT: ShShutterLimitRealAndTargetPositions,i %d, real %d, target %d, max %d"), i,Shutter[i].real_position, Shutter[i].target_position,Shutter[i].open_max);
   if (Shutter[i].real_position<0) Shutter[i].real_position = 0;
   if (Shutter[i].real_position>Shutter[i].open_max) Shutter[i].real_position = Shutter[i].open_max;
   if (Shutter[i].target_position<0) Shutter[i].target_position = 0;
@@ -487,17 +488,25 @@ void tuyaUpdateRealposition(uint8_t i, uint16_t pos)
 {
   char scommand[CMDSZ];
   char stopic[TOPSZ];
+  if(pos == 0) {
+    Shutter[i].real_position = Shutter[i].target_position;
+  } else{
+    Shutter[i].real_position =  (Settings.shutter_options[i] & 1) ? ShutterPercentToRealPosition(100 - pos,1) : ShutterPercentToRealPosition(pos,1) ;
+  }
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: pos report option %d,  pos %d, real %d, target %d, direction %d"),Settings.shutter_options[i],pos,Shutter[i].real_position, Shutter[i].target_position, Shutter[i].direction );
 
-  Shutter[i].real_position =  pos;
+  if(Shutter[i].real_position == Shutter[i].target_position) {
+    Shutter[i].direction = 0;
+  }
+  AddLog_P(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: pos2 report pos %d, real %d, target %d, direction %d"),pos,Shutter[i].real_position, Shutter[i].target_position, Shutter[i].direction );
+
   // sending MQTT result to broker
   snprintf_P(scommand, sizeof(scommand),PSTR(D_SHUTTER "%d"), i+1);
   GetTopic_P(stopic, STAT, TasmotaGlobal.mqtt_topic, scommand);
-  Response_P("%d", 100 - pos);
+  Response_P("%d", (Settings.shutter_options[i] & 1) ? pos : 100 - pos );
   MqttPublish(stopic, Settings.flag.mqtt_power_retain);  // CMND_POWERRETAIN
   ShutterReportPosition(true, i);
-  if(Shutter[i].real_position = Shutter[i].target_position) {
-    Shutter[i].direction = 0;
-  }
+  
 }
 
 
@@ -1519,7 +1528,7 @@ bool Xdrv27(uint8_t function)
         ShutterInit();
         break;
       case FUNC_EVERY_50_MSECOND:
-        ShutterUpdatePosition();
+        //ShutterUpdatePosition();
         break;
       case FUNC_EVERY_SECOND:
       //case FUNC_EVERY_250_MSECOND:
